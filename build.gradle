@@ -19,12 +19,9 @@ dependencies {
 }
 
 jar{
-    manifest(new Action<Manifest>() {
-        @Override
-        void execute(Manifest manifest) {
-            manifest.attributes 'Agent-Class': 'me.onils.unlockcosmetics.Agent',
-                                'Premain-Class': 'me.onils.unlockcosmetics.Agent',
-                                'Can-Retransform-Classes': true
-        }
-    })
+    manifest {
+        attributes 'Agent-Class': 'me.onils.unlockcosmetics.Agent'
+        attributes 'Premain-Class': 'me.onils.unlockcosmetics.Agent'
+        attributes 'Can-Retransform-Classes': true
+    }
 }

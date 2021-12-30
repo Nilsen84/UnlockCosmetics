@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class Transformer implements ClassFileTransformer {
+public class EmoteTransformer implements ClassFileTransformer {
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
         if (classfileBuffer == null || classfileBuffer.length == 0) {
