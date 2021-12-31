@@ -43,13 +43,10 @@ public class Proxy {
         if(packetClass != null) {
             try {
                 WSPacket packet = packetClass.getDeclaredConstructor().newInstance();
-                System.err.println("ORIGINAL SIZE: " + buffer.length);
                 packet.read(packetBuffer);
                 packet.process(this);
 
-                byte[] newBytes = packetToBytes(packetId, packet);
-                System.err.println("NEW SIZE: " + newBytes.length);
-                return newBytes;
+                return packetToBytes(packetId, packet);
             } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException ex) {
                 ex.printStackTrace();
             }
