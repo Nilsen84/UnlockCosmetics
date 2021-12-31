@@ -1,5 +1,6 @@
 package me.onils.unlockcosmetics;
 
+import com.google.errorprone.annotations.Var;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -36,18 +37,14 @@ public class WebsocketTransformer implements ClassFileTransformer {
                             .anyMatch("Assets"::equals);
 
                     if(assetsWs){
-                        for(MethodNode methodNode2 : cn.methods){
-                            if(methodNode2.name.equals("onMessage") && methodNode2.desc.equals("(Ljava/nio/ByteBuffer;)V")){
-                                for(AbstractInsnNode insnNode : methodNode2.instructions){
-                                    if(insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL){
-                                        MethodInsnNode methodInsnNode = (MethodInsnNode)insnNode;
-                                        if(methodInsnNode.owner.equals("java/nio/ByteBuffer") && methodInsnNode.name.equals("array") && methodInsnNode.desc.equals("()[B")){
-                                            methodNode2.instructions.insert(methodInsnNode, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/onils/unlockcosmetics/proxy/Proxy", "receive", "([B)[B"));
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        FieldNode proxy = new FieldNode(
+                                Opcodes.ACC_PUBLIC,
+                                "proxy",
+                                "Lme/onils/unlockcosmetics/proxy/Proxy;",
+                                null,
+                                null
+                        );
+
                         MethodNode send = new MethodNode(
                                 Opcodes.ACC_PUBLIC,
                                 "send",
@@ -57,20 +54,55 @@ public class WebsocketTransformer implements ClassFileTransformer {
                         );
 
                         send.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                        send.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                        send.instructions.add(new FieldInsnNode(Opcodes.GETFIELD, cn.name, proxy.name, proxy.desc));
                         send.instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
-                        send.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "me/onils/unlockcosmetics/proxy/Proxy", "send", "([B)[B"));
+                        send.instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "me/onils/unlockcosmetics/proxy/Proxy", "send", "([B)[B"));
                         send.instructions.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, cr.getSuperName(), send.name, send.desc));
                         send.instructions.add(new InsnNode(Opcodes.RETURN));
+
+                        for(MethodNode methodNode2 : cn.methods){
+                            if(methodNode2.name.equals("onMessage") && methodNode2.desc.equals("(Ljava/nio/ByteBuffer;)V")){
+                                for(AbstractInsnNode insnNode : methodNode2.instructions){
+                                    if(insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL){
+                                        MethodInsnNode methodInsnNode = (MethodInsnNode)insnNode;
+                                        if(methodInsnNode.owner.equals("java/nio/ByteBuffer") && methodInsnNode.name.equals("array") && methodInsnNode.desc.equals("()[B")){
+                                            InsnList inject = new InsnList();
+                                            inject.add(new VarInsnNode(Opcodes.ASTORE, methodNode2.maxLocals));
+                                            inject.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                                            inject.add(new FieldInsnNode(Opcodes.GETFIELD, cn.name, proxy.name, proxy.desc));
+                                            inject.add(new VarInsnNode(Opcodes.ALOAD, methodNode2.maxLocals));
+                                            inject.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "me/onils/unlockcosmetics/proxy/Proxy", "receive", "([B)[B"));
+                                            methodNode2.instructions.insert(methodInsnNode, inject);
+                                        }
+                                    }
+                                }
+                            }else if(methodNode2.name.equals("<init>") && methodNode2.desc.equals("(Ljava/util/Map;)V")){
+                                AbstractInsnNode ret = methodNode2.instructions.getLast();
+                                do{
+                                    if(ret.getOpcode() == Opcodes.RETURN){
+                                        break;
+                                    }
+                                }while ((ret = ret.getPrevious()) != null);
+                                InsnList constructProxy = new InsnList();
+                                constructProxy.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                                constructProxy.add(new TypeInsnNode(Opcodes.NEW, "me/onils/unlockcosmetics/proxy/Proxy"));
+                                constructProxy.add(new InsnNode(Opcodes.DUP));
+                                constructProxy.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                                constructProxy.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "me/onils/unlockcosmetics/proxy/Proxy", "<init>", "(Ljava/util/Map;)V"));
+                                constructProxy.add(new FieldInsnNode(Opcodes.PUTFIELD, cn.name, "proxy", "Lme/onils/unlockcosmetics/proxy/Proxy;"));
+                                methodNode2.instructions.insertBefore(ret, constructProxy);
+                            }
+                        }
+
                         cn.methods.add(1, send);
+
+                        cn.fields.add(proxy);
 
                         ClassWriter cw = new LunarClassWriter(cr, ClassWriter.COMPUTE_MAXS|ClassWriter.COMPUTE_FRAMES, loader);
                         cn.accept(cw);
-                        byte[] bytes = cw.toByteArray();
 
-                        try(OutputStream os = new FileOutputStream("/home/nils/Desktop/ws.class")){
-                            os.write(bytes);
-                        }catch (IOException ignored){}
-                        return bytes;
+                        return cw.toByteArray();
                     }
                 }
             }

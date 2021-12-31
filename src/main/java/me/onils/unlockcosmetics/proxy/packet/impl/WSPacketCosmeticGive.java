@@ -51,9 +51,13 @@ public class WSPacketCosmeticGive extends WSPacket {
     }
 
     @Override
-    public void process() {
-        for(CosmeticIndexEntry entry : Proxy.getIndex().values()){
-            cosmetics.putIfAbsent(entry.getId(), false);
+    public void process(Proxy proxy) {
+        if(this.playerId.equals(proxy.getPlayerId())){
+            proxy.getPurchasedCosmetics().addAll(this.cosmetics.keySet());
+
+            for(CosmeticIndexEntry entry : Proxy.getIndex().values()){
+                cosmetics.putIfAbsent(entry.getId(), false);
+            }
         }
     }
 }

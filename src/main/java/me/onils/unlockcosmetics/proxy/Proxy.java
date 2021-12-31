@@ -7,13 +7,21 @@ import me.onils.unlockcosmetics.util.PacketBuffer;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class Proxy {
     @Getter
-    private static Map<Integer, CosmeticIndexEntry> index = new HashMap<>();
+    private static final Map<Integer, CosmeticIndexEntry> index = new HashMap<>();
+
+    @Getter
+    private Set<Integer> purchasedCosmetics = new HashSet<>();
+
+    @Getter
+    private final UUID playerId;
+
+    public Proxy(Map<String, String> headers){
+        playerId = UUID.fromString(headers.get("playerId"));
+    }
 
     private static byte[] packetToBytes(int packetId, WSPacket packet){
         PacketBuffer packetBuffer = new PacketBuffer(Unpooled.buffer());
@@ -27,42 +35,34 @@ public class Proxy {
         return bytes;
     }
 
-    public static byte[] receive(byte[] buffer){
+    private byte[] processPacket(byte[] buffer){
         PacketBuffer packetBuffer = new PacketBuffer(buffer);
         int packetId = packetBuffer.readVarIntFromBuffer();
 
-        System.err.println("RECEIVED PACKET: " + packetId);
-
         Class<? extends WSPacket> packetClass = WSPacket.REGISTRY.get(packetId);
-        if(packetClass != null){
-            try{
+        if(packetClass != null) {
+            try {
                 WSPacket packet = packetClass.getDeclaredConstructor().newInstance();
                 System.err.println("ORIGINAL SIZE: " + buffer.length);
-                try(OutputStream os = new FileOutputStream("/home/nils/Desktop/original.bin")){
-                    os.write(buffer);
-                }catch (IOException ignored){}
                 packet.read(packetBuffer);
-                packet.process();
+                packet.process(this);
 
                 byte[] newBytes = packetToBytes(packetId, packet);
                 System.err.println("NEW SIZE: " + newBytes.length);
-                try(OutputStream os = new FileOutputStream("/home/nils/Desktop/new.bin")){
-                    os.write(newBytes);
-                }catch (IOException ignored){}
                 return newBytes;
-            }catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException ex){
+            } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException ex) {
                 ex.printStackTrace();
             }
         }
-
         return buffer;
-
     }
 
-    public static byte[] send(byte[] buffer){
-        System.err.println("SENT PACKET: " + new PacketBuffer(buffer).readVarIntFromBuffer());
+    public byte[] receive(byte[] buffer){
+        return processPacket(buffer);
+    }
 
-        return buffer;
+    public byte[] send(byte[] buffer){
+        return processPacket(buffer);
     }
 
     static {
