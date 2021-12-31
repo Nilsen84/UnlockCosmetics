@@ -6,16 +6,10 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class EmoteTransformer implements ClassFileTransformer {
@@ -169,14 +163,7 @@ public class EmoteTransformer implements ClassFileTransformer {
                     }
                     LunarClassWriter cw = new LunarClassWriter(cr, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS, loader);
                     cn.accept(cw);
-                    byte[] bytes = cw.toByteArray();
-                    try(OutputStream os = new FileOutputStream("/home/nils/Desktop/akfapojgåawjg.class")){
-                        System.err.println("WRITING TO FILE");
-                        os.write(cw.toByteArray());
-                    }catch (Exception ex){
-                        ex.printStackTrace();
-                    }
-                    return bytes;
+                    return cw.toByteArray();
                 }
             }
         }
