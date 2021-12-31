@@ -36,24 +36,41 @@ public class WebsocketTransformer implements ClassFileTransformer {
                             .anyMatch("Assets"::equals);
 
                     if(assetsWs){
-                        for(AbstractInsnNode insnNode : methodNode.instructions){
-                            if(insnNode.getOpcode() == Opcodes.INVOKESPECIAL){
-                                System.err.println("INVOKESPECIAL");
-                                MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
-                                if(methodInsnNode.owner.equals("java/net/URI") && methodInsnNode.name.equals("<init>")){
-                                    System.err.println("URI");
-                                    InsnList inject = new InsnList();
-                                    inject.add(new InsnNode(Opcodes.POP));
-                                    inject.add(new LdcInsnNode("ws://localhost:1234"));
-                                    methodNode.instructions.insertBefore(methodInsnNode, inject);
-                                    break;
+                        for(MethodNode methodNode2 : cn.methods){
+                            if(methodNode2.name.equals("onMessage") && methodNode2.desc.equals("(Ljava/nio/ByteBuffer;)V")){
+                                for(AbstractInsnNode insnNode : methodNode2.instructions){
+                                    if(insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL){
+                                        MethodInsnNode methodInsnNode = (MethodInsnNode)insnNode;
+                                        if(methodInsnNode.owner.equals("java/nio/ByteBuffer") && methodInsnNode.name.equals("array") && methodInsnNode.desc.equals("()[B")){
+                                            methodNode2.instructions.insert(methodInsnNode, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/onils/unlockcosmetics/proxy/Proxy", "receive", "([B)[B"));
+                                        }
+                                    }
                                 }
                             }
                         }
+                        MethodNode send = new MethodNode(
+                                Opcodes.ACC_PUBLIC,
+                                "send",
+                                "([B)V",
+                                null,
+                                null
+                        );
 
-                        ClassWriter cw = new ClassWriter(cr, 0);
+                        send.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                        send.instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                        send.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "me/onils/unlockcosmetics/proxy/Proxy", "send", "([B)[B"));
+                        send.instructions.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, cr.getSuperName(), send.name, send.desc));
+                        send.instructions.add(new InsnNode(Opcodes.RETURN));
+                        cn.methods.add(1, send);
+
+                        ClassWriter cw = new LunarClassWriter(cr, ClassWriter.COMPUTE_MAXS|ClassWriter.COMPUTE_FRAMES, loader);
                         cn.accept(cw);
-                        return cw.toByteArray();
+                        byte[] bytes = cw.toByteArray();
+
+                        try(OutputStream os = new FileOutputStream("/home/nils/Desktop/ws.class")){
+                            os.write(bytes);
+                        }catch (IOException ignored){}
+                        return bytes;
                     }
                 }
             }
