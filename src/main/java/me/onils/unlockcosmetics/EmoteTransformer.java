@@ -104,7 +104,6 @@ public class EmoteTransformer implements ClassFileTransformer {
                             }
 
                             if(getPlayer == null){
-                                System.err.println("GET PLAYER IS NULL");
                                 continue;
                             }
 
@@ -125,7 +124,6 @@ public class EmoteTransformer implements ClassFileTransformer {
                             }
 
                             if(setEmotePlay == null){
-                                System.err.println("SET EMOTE PLAY IS NULL");
                                 continue;
                             }
 

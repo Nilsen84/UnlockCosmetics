@@ -19,6 +19,10 @@ public class Proxy {
 
     @Getter
     @Setter
+    private Set<Integer> purchasedEmotes = new HashSet<>();
+
+    @Getter
+    @Setter
     private boolean lunarPlus = false;
 
     @Getter
@@ -64,7 +68,6 @@ public class Proxy {
     }
 
     public byte[] send(byte[] buffer){
-        System.err.println("Sent packet: " + new PacketBuffer(buffer).readVarIntFromBuffer());
         return processPacket(buffer);
     }
 
