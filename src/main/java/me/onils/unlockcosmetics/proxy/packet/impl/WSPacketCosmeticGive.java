@@ -30,7 +30,7 @@ public class WSPacketCosmeticGive extends WSPacket {
         buffer.writeInt(color);
         buffer.writeBoolean(true);
         buffer.writeBoolean(true);
-        buffer.writeBoolean(false);
+        buffer.writeBoolean(clothCloaks);
     }
 
     @Override
