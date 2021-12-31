@@ -28,8 +28,6 @@ public class WebsocketTransformer implements ClassFileTransformer {
 
             for(MethodNode methodNode : cn.methods){
                 if(methodNode.name.equals("<init>")){
-                    System.err.println("CONSTRUCTOR");
-
                     boolean assetsWs = Arrays.stream(methodNode.instructions.toArray())
                             .filter(LdcInsnNode.class::isInstance)
                             .map(LdcInsnNode.class::cast)
