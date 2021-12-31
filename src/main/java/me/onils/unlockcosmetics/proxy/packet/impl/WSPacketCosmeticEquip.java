@@ -8,7 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class WSPacketCosmeticEquip extends WSPacket {
-    public Map<Long, Boolean> cosmetics;
+    private Map<Long, Boolean> cosmetics;
+    private boolean clothCloaks;
 
     @Override
     public void write(PacketBuffer buffer) {
@@ -18,6 +19,7 @@ public class WSPacketCosmeticEquip extends WSPacket {
             buffer.writeLong(entry.getKey());
             buffer.writeBoolean(entry.getValue());
         }
+        buffer.writeBoolean(clothCloaks);
     }
 
     @Override
@@ -27,11 +29,14 @@ public class WSPacketCosmeticEquip extends WSPacket {
         for(int i = 0; i < size; ++i){
             cosmetics.put(buffer.readLong(), buffer.readBoolean());
         }
+        this.clothCloaks = buffer.readBoolean();
     }
 
     @Override
     public boolean process(Proxy proxy) {
-        cosmetics.keySet().removeIf(id -> !proxy.getPurchasedCosmetics().contains(id.intValue()));
+        if(!proxy.isLunarPlus())
+            this.clothCloaks = false;
+        this.cosmetics.keySet().removeIf(id -> !proxy.getPurchasedCosmetics().contains(id.intValue()));
         return true;
     }
 }

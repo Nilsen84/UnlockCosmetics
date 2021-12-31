@@ -2,6 +2,7 @@ package me.onils.unlockcosmetics.proxy;
 
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
+import lombok.Setter;
 import me.onils.unlockcosmetics.proxy.packet.WSPacket;
 import me.onils.unlockcosmetics.util.PacketBuffer;
 
@@ -15,6 +16,10 @@ public class Proxy {
 
     @Getter
     private Set<Integer> purchasedCosmetics = new HashSet<>();
+
+    @Getter
+    @Setter
+    private boolean lunarPlus = false;
 
     @Getter
     private final UUID playerId;
@@ -59,6 +64,7 @@ public class Proxy {
     }
 
     public byte[] send(byte[] buffer){
+        System.err.println("Sent packet: " + new PacketBuffer(buffer).readVarIntFromBuffer());
         return processPacket(buffer);
     }
 

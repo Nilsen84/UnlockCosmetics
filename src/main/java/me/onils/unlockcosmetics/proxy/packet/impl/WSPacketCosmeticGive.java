@@ -12,6 +12,8 @@ public class WSPacketCosmeticGive extends WSPacket {
     private UUID playerId;
     private int color;
     private boolean update;
+    private boolean lunarPlus;
+    private boolean clothCloaks;
 
     @Override
     public void write(PacketBuffer buffer) {
@@ -27,7 +29,8 @@ public class WSPacketCosmeticGive extends WSPacket {
 
         buffer.writeInt(color);
         buffer.writeBoolean(true);
-        buffer.writeChar(0);
+        buffer.writeBoolean(true);
+        buffer.writeBoolean(false);
     }
 
     @Override
@@ -48,13 +51,14 @@ public class WSPacketCosmeticGive extends WSPacket {
         }
         this.color = buffer.readInt();
         this.update = buffer.readBoolean();
+        this.lunarPlus = buffer.readBoolean();
+        this.clothCloaks = buffer.readBoolean();
     }
 
     @Override
     public boolean process(Proxy proxy) {
         if(this.playerId.equals(proxy.getPlayerId())){
-            color = 0x0080FF;
-
+            proxy.setLunarPlus(lunarPlus);
             proxy.getPurchasedCosmetics().addAll(this.cosmetics.keySet());
 
             for(CosmeticIndexEntry entry : Proxy.getIndex().values()){
