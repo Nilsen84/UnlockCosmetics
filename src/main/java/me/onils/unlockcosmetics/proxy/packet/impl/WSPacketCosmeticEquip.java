@@ -30,7 +30,8 @@ public class WSPacketCosmeticEquip extends WSPacket {
     }
 
     @Override
-    public void process(Proxy proxy) {
+    public boolean process(Proxy proxy) {
         cosmetics.keySet().removeIf(id -> !proxy.getPurchasedCosmetics().contains(id.intValue()));
+        return true;
     }
 }

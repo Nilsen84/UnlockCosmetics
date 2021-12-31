@@ -44,9 +44,9 @@ public class Proxy {
             try {
                 WSPacket packet = packetClass.getDeclaredConstructor().newInstance();
                 packet.read(packetBuffer);
-                packet.process(this);
-
-                return packetToBytes(packetId, packet);
+                if(packet.process(this)){
+                    return packetToBytes(packetId, packet);
+                }
             } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException ex) {
                 ex.printStackTrace();
             }

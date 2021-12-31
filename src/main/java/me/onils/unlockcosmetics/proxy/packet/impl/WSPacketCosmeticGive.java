@@ -25,7 +25,7 @@ public class WSPacketCosmeticGive extends WSPacket {
             buffer.writeBoolean(cosmetic.getValue());
         }
 
-        buffer.writeInt(0x0080FF);
+        buffer.writeInt(color);
         buffer.writeBoolean(true);
         buffer.writeChar(0);
     }
@@ -51,13 +51,17 @@ public class WSPacketCosmeticGive extends WSPacket {
     }
 
     @Override
-    public void process(Proxy proxy) {
+    public boolean process(Proxy proxy) {
         if(this.playerId.equals(proxy.getPlayerId())){
+            color = 0x0080FF;
+
             proxy.getPurchasedCosmetics().addAll(this.cosmetics.keySet());
 
             for(CosmeticIndexEntry entry : Proxy.getIndex().values()){
                 cosmetics.putIfAbsent(entry.getId(), false);
             }
+            return true;
         }
+        return false;
     }
 }

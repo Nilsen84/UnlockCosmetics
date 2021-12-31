@@ -14,7 +14,7 @@ public abstract class WSPacket {
 
     public abstract void write(PacketBuffer buffer);
     public abstract void read(PacketBuffer buffer);
-    public abstract void process(Proxy proxy);
+    public abstract boolean process(Proxy proxy);
 
     static {
         REGISTRY = new HashMap<>();
