@@ -5,6 +5,10 @@ import me.onils.unlockcosmetics.proxy.Proxy;
 import me.onils.unlockcosmetics.proxy.packet.WSPacket;
 import me.onils.unlockcosmetics.util.PacketBuffer;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 public class WSPacketCosmeticGive extends WSPacket {
@@ -58,11 +62,20 @@ public class WSPacketCosmeticGive extends WSPacket {
     @Override
     public boolean process(Proxy proxy) {
         if(this.playerId.equals(proxy.getPlayerId())){
+            Set<Integer> enabledCosmetics = new HashSet<>();
+            try(Scanner scanner = new Scanner(new File(System.getProperty("user.home") + "/.lunarclient/cosmetics"));){
+                while(scanner.hasNextLine()){
+                    enabledCosmetics.add(Integer.parseInt(scanner.nextLine()));
+                }
+            }catch (FileNotFoundException ignored){}
+
+
+
             proxy.setLunarPlus(lunarPlus);
             proxy.getPurchasedCosmetics().addAll(this.cosmetics.keySet());
 
             for(CosmeticIndexEntry entry : Proxy.getIndex().values()){
-                cosmetics.putIfAbsent(entry.getId(), false);
+                cosmetics.putIfAbsent(entry.getId(), enabledCosmetics.contains(entry.getId()));
             }
             return true;
         }

@@ -4,6 +4,7 @@ import me.onils.unlockcosmetics.proxy.Proxy;
 import me.onils.unlockcosmetics.proxy.packet.WSPacket;
 import me.onils.unlockcosmetics.util.PacketBuffer;
 
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +37,19 @@ public class WSPacketCosmeticEquip extends WSPacket {
     public boolean process(Proxy proxy) {
         if(!proxy.isLunarPlus())
             this.clothCloaks = false;
+
+        try(OutputStream os = new FileOutputStream(System.getProperty("user.home") + "/.lunarclient/cosmetics")){
+            PrintStream printStream = new PrintStream(os, false);
+
+            for(Map.Entry<Long, Boolean> entry : this.cosmetics.entrySet()){
+                if(entry.getValue()){
+                    printStream.println(entry.getKey());
+                }
+            }
+            printStream.flush();
+            printStream.close();
+        }catch (IOException ignored) {}
+
         this.cosmetics.keySet().removeIf(id -> !proxy.getPurchasedCosmetics().contains(id.intValue()));
         return true;
     }
