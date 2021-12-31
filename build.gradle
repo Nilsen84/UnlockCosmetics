@@ -17,6 +17,9 @@ dependencies {
     implementation group:  'org.ow2.asm', name: 'asm', version: '9.2'
     implementation group:  'org.ow2.asm', name: 'asm-tree', version: '9.2'
     implementation group : 'org.java-websocket', name: 'Java-WebSocket', version: '1.5.2'
+    implementation 'io.netty:netty-buffer:4.0.10.Final'
+    implementation 'io.netty:netty-codec:4.0.10.Final'
+    implementation 'com.google.guava:guava:31.0.1-jre'
 }
 
 jar{

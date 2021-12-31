@@ -1,16 +1,18 @@
 package me.onils.unlockcosmetics.proxy;
 
-import java.nio.ByteBuffer;
+import me.onils.unlockcosmetics.util.PacketBuffer;
 
 public class Proxy {
     public static byte[] receive(byte[] buffer){
-        System.err.println("RECIEVED DATA");
+        System.err.println("RECEIVED PACKET: " + new PacketBuffer(buffer).readVarIntFromBuffer());
+
         return buffer;
 
     }
 
     public static byte[] send(byte[] buffer){
-        System.err.println("SENT DATA");
+        System.err.println("SENT PACKET: " + new PacketBuffer(buffer).readVarIntFromBuffer());
+
         return buffer;
     }
 }
