@@ -8,12 +8,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public class WSPacketEquippedEmotes extends WSPacket {
-    private Set<Integer> equipped;
+    private List<Integer> equipped;
 
     @Override
     public void write(PacketBuffer buffer) {
@@ -27,7 +26,7 @@ public class WSPacketEquippedEmotes extends WSPacket {
     @Override
     public void read(PacketBuffer buffer) {
         int numEquipped = buffer.readVarIntFromBuffer();
-        equipped = new HashSet<>(numEquipped);
+        equipped = new ArrayList<>(numEquipped);
 
         for(int i = 0; i < numEquipped; ++i){
             equipped.add(buffer.readVarIntFromBuffer());
