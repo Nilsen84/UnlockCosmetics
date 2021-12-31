@@ -1,7 +1,5 @@
 package me.onils.unlockcosmetics;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
