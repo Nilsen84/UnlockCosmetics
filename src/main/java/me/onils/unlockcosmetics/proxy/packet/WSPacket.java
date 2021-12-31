@@ -12,6 +12,7 @@ public abstract class WSPacket {
 
     public abstract void write(PacketBuffer buffer);
     public abstract void read(PacketBuffer buffer);
+    public abstract void process();
 
     static {
         REGISTRY = new HashMap<>();
