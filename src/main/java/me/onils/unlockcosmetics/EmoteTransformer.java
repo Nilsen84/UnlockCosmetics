@@ -72,8 +72,8 @@ public class EmoteTransformer implements ClassFileTransformer {
 
                                     if("Couldn't perform emote (%s) as you do not own it".equals(ldcNode.cst)){
                                         while((insnNode = insnNode.getPrevious()) != null){
-                                            if(insnNode instanceof LabelNode){
-                                                dontOwn = (LabelNode) insnNode;
+                                            if(insnNode instanceof LabelNode label){
+                                                dontOwn = label;
                                                 break outer;
                                             }
                                         }

@@ -10,22 +10,18 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
+@Getter
+@Setter
 public class Proxy {
     @Getter
     private static final Map<Integer, CosmeticIndexEntry> index = new HashMap<>();
 
-    @Getter
     private Set<Integer> purchasedCosmetics = new HashSet<>();
 
-    @Getter
-    @Setter
     private Set<Integer> purchasedEmotes = new HashSet<>();
 
-    @Getter
-    @Setter
     private boolean lunarPlus = false;
 
-    @Getter
     private final UUID playerId;
 
     public Proxy(Map<String, String> headers){
