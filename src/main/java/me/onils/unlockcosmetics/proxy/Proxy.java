@@ -49,6 +49,7 @@ public class Proxy {
             try {
                 WSPacket packet = packetClass.getDeclaredConstructor().newInstance();
                 packet.read(packetBuffer);
+                packetBuffer.release();
                 if(packet.process(this)){
                     return packetToBytes(packetId, packet);
                 }
