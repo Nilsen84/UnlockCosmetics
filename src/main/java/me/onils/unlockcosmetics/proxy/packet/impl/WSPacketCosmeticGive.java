@@ -70,7 +70,7 @@ public class WSPacketCosmeticGive extends WSPacket {
             }catch (FileNotFoundException ignored){}
 
             proxy.setLunarPlus(lunarPlus);
-            proxy.setPurchasedEmotes(this.cosmetics.keySet());
+            proxy.setPurchasedCosmetics(new HashSet<>(this.cosmetics.keySet()));
 
             for(CosmeticIndexEntry entry : Proxy.getIndex().values()){
                 cosmetics.putIfAbsent(entry.getId(), enabledCosmetics.contains(entry.getId()));
