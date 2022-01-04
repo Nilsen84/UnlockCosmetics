@@ -45,7 +45,7 @@ public class WSPacketEquippedEmotes extends WSPacket {
             printStream.close();
         }catch (IOException ignored) {}
 
-        equipped.removeIf(id -> !proxy.getPurchasedCosmetics().contains(id));
+        equipped.removeIf(id -> !proxy.getPurchasedEmotes().contains(id));
         return false;
     }
 }
