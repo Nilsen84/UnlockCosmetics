@@ -31,3 +31,9 @@ jar{
         attributes 'Can-Retransform-Classes': true
     }
 }
+
+shadowJar {
+    minimize()
+
+    archiveFileName = "${project.name}.jar"
+}
