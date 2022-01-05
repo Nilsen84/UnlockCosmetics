@@ -72,8 +72,9 @@ public class WSPacketCosmeticGive extends WSPacket {
             proxy.setLunarPlus(lunarPlus);
             proxy.setPurchasedCosmetics(new HashSet<>(this.cosmetics.keySet()));
 
+            this.cosmetics.clear();
             for(CosmeticIndexEntry entry : Proxy.getIndex().values()){
-                cosmetics.putIfAbsent(entry.getId(), enabledCosmetics.contains(entry.getId()));
+                this.cosmetics.put(entry.getId(), enabledCosmetics.contains(entry.getId()));
             }
             return true;
         }
