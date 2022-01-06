@@ -18,7 +18,6 @@ dependencies {
     implementation 'org.ow2.asm:asm:9.2'
     implementation 'io.netty:netty-buffer:4.0.10.Final'
     implementation 'io.netty:netty-codec:4.0.10.Final'
-    implementation 'com.google.guava:guava:31.0.1-jre'
 
     compileOnly 'org.projectlombok:lombok:1.18.22'
     annotationProcessor 'org.projectlombok:lombok:1.18.22'

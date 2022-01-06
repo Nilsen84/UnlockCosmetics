@@ -1,6 +1,5 @@
 package me.onils.unlockcosmetics.util;
 
-import com.google.common.base.Charsets;
 import io.netty.buffer.*;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
@@ -116,7 +115,7 @@ public class PacketBuffer extends ByteBuf {
         this.writeByte((int)value);
     }
 
-    public String readStringFromBuffer(int maxLength) {
+/*    public String readStringFromBuffer(int maxLength) {
         int i = this.readVarIntFromBuffer();
         if(i > maxLength * 4) {
             throw new DecoderException("The received encoded string buffer length is longer than maximum allowed (" + i + " > " + maxLength * 4 + ")");
@@ -141,7 +140,7 @@ public class PacketBuffer extends ByteBuf {
             this.writeBytes(abyte);
             return this;
         }
-    }
+    }*/
 
     public int capacity() {
         return this.buf.capacity();
