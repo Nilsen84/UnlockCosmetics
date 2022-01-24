@@ -76,6 +76,7 @@ public class WSPacketCosmeticGive extends WSPacket {
             for(CosmeticIndexEntry entry : Proxy.getIndex().values()){
                 this.cosmetics.put(entry.getId(), enabledCosmetics.contains(entry.getId()));
             }
+            this.color = 0xFF55FF;
             return true;
         }
         return false;
