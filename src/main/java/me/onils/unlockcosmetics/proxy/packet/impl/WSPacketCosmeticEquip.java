@@ -1,6 +1,7 @@
 package me.onils.unlockcosmetics.proxy.packet.impl;
 
 import me.onils.unlockcosmetics.proxy.Proxy;
+import me.onils.unlockcosmetics.proxy.packet.PacketState;
 import me.onils.unlockcosmetics.proxy.packet.WSPacket;
 import me.onils.unlockcosmetics.util.PacketBuffer;
 
@@ -34,7 +35,7 @@ public class WSPacketCosmeticEquip extends WSPacket {
     }
 
     @Override
-    public boolean process(Proxy proxy) {
+    public PacketState process(Proxy proxy) {
         if(!proxy.isLunarPlus())
             this.clothCloaks = false;
 
@@ -51,6 +52,6 @@ public class WSPacketCosmeticEquip extends WSPacket {
         }catch (IOException ignored) {}
 
         this.cosmetics.keySet().removeIf(id -> !proxy.getPurchasedCosmetics().contains(id.intValue()));
-        return true;
+        return PacketState.MODIFIED;
     }
 }

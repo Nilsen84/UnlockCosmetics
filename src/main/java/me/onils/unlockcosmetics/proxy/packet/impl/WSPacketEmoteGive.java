@@ -1,6 +1,7 @@
 package me.onils.unlockcosmetics.proxy.packet.impl;
 
 import me.onils.unlockcosmetics.proxy.Proxy;
+import me.onils.unlockcosmetics.proxy.packet.PacketState;
 import me.onils.unlockcosmetics.proxy.packet.WSPacket;
 import me.onils.unlockcosmetics.util.PacketBuffer;
 
@@ -36,7 +37,7 @@ public class WSPacketEmoteGive extends WSPacket {
     }
 
     @Override
-    public boolean process(Proxy proxy) {
+    public PacketState process(Proxy proxy) {
         equipped = new ArrayList<>();
         try(Scanner scanner = new Scanner(new File(System.getProperty("user.home") + "/.lunarclient/emotes"));){
             while(scanner.hasNextLine()){
@@ -45,6 +46,6 @@ public class WSPacketEmoteGive extends WSPacket {
         }catch (FileNotFoundException ignored){}
 
         proxy.setPurchasedEmotes(owned);
-        return true;
+        return PacketState.MODIFIED;
     }
 }

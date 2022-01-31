@@ -2,6 +2,7 @@ package me.onils.unlockcosmetics.proxy.packet.impl;
 
 import me.onils.unlockcosmetics.proxy.CosmeticIndexEntry;
 import me.onils.unlockcosmetics.proxy.Proxy;
+import me.onils.unlockcosmetics.proxy.packet.PacketState;
 import me.onils.unlockcosmetics.proxy.packet.WSPacket;
 import me.onils.unlockcosmetics.util.PacketBuffer;
 
@@ -18,6 +19,7 @@ public class WSPacketCosmeticGive extends WSPacket {
     private boolean update;
     private boolean lunarPlus;
     private boolean clothCloaks;
+    private Map<Integer, Float> hatHeightOffset;
 
     @Override
     public void write(PacketBuffer buffer) {
@@ -35,6 +37,11 @@ public class WSPacketCosmeticGive extends WSPacket {
         buffer.writeBoolean(true);
         buffer.writeBoolean(true);
         buffer.writeBoolean(clothCloaks);
+        buffer.writeVarIntToBuffer(hatHeightOffset.size());
+        for(Map.Entry<Integer, Float> entry : hatHeightOffset.entrySet()){
+            buffer.writeInt(entry.getKey());
+            buffer.writeFloat(entry.getValue());
+        }
     }
 
     @Override
@@ -57,10 +64,16 @@ public class WSPacketCosmeticGive extends WSPacket {
         this.update = buffer.readBoolean();
         this.lunarPlus = buffer.readBoolean();
         this.clothCloaks = buffer.readBoolean();
+
+        int hatHeightOffsetSize = buffer.readVarIntFromBuffer();
+        this.hatHeightOffset = new HashMap<>(hatHeightOffsetSize);
+        for(int i = 0; i < hatHeightOffsetSize; ++i){
+            hatHeightOffset.put(buffer.readInt(), buffer.readFloat());
+        }
     }
 
     @Override
-    public boolean process(Proxy proxy) {
+    public PacketState process(Proxy proxy) {
         if(this.playerId.equals(proxy.getPlayerId())){
             Set<Integer> enabledCosmetics = new HashSet<>();
             try(Scanner scanner = new Scanner(new File(System.getProperty("user.home") + "/.lunarclient/cosmetics"));){
@@ -77,8 +90,8 @@ public class WSPacketCosmeticGive extends WSPacket {
                 this.cosmetics.put(entry.getId(), enabledCosmetics.contains(entry.getId()));
             }
             this.color = 0xFF55FF;
-            return true;
+            return PacketState.MODIFIED;
         }
-        return false;
+        return PacketState.UNTOUCHED;
     }
 }

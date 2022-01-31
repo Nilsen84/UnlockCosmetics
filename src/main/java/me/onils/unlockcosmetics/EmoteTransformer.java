@@ -6,6 +6,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
@@ -67,9 +69,7 @@ public class EmoteTransformer implements ClassFileTransformer {
                             LabelNode dontOwn = null;
                             outer:
                             for(AbstractInsnNode insnNode : methodNode.instructions){
-                                if(insnNode.getOpcode() == Opcodes.LDC){
-                                    LdcInsnNode ldcNode = (LdcInsnNode) insnNode;
-
+                                if(insnNode instanceof LdcInsnNode ldcNode){
                                     if("Couldn't perform emote (%s) as you do not own it".equals(ldcNode.cst)){
                                         while((insnNode = insnNode.getPrevious()) != null){
                                             if(insnNode instanceof LabelNode label){
@@ -107,18 +107,20 @@ public class EmoteTransformer implements ClassFileTransformer {
                                 continue;
                             }
 
-                            Type[] arguments = Type.getArgumentTypes(methodNode.desc);
-
-                            if(arguments.length <= 0)
-                                continue;
-
                             MethodNode setEmotePlay = null;
+                            String emoteClass = null;
 
                             for(MethodNode method : cn.methods){
                                 if(Type.getReturnType(method.desc) == Type.VOID_TYPE){
                                     Type[] args = Type.getArgumentTypes(method.desc);
-                                    if(args.length == 2 && args[1].equals(arguments[0])){
-                                        setEmotePlay = method;
+                                    if(args.length == 2){
+                                        for(AbstractInsnNode insn : method.instructions){
+                                            if(insn instanceof MethodInsnNode methodInsnNode
+                                                && methodInsnNode.name.equals("bridge$setThirdPersonView")){
+                                                setEmotePlay = method;
+                                                emoteClass = args[1].getInternalName();
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -139,6 +141,17 @@ public class EmoteTransformer implements ClassFileTransformer {
                                 }
                             }
 
+                            MethodNode getEmoteById = null;
+                            for(MethodNode method : cn.methods){
+                                if(method.desc.equals("(I)L" + emoteClass + ';') && (method.access & Opcodes.ACC_STATIC) == 0){
+                                    getEmoteById = method;
+                                }
+                            }
+
+                            if(getEmoteById == null){
+                                continue;
+                            }
+
                             for(AbstractInsnNode insnNode : methodNode.instructions){
                                 if(insnNode.getOpcode() == Opcodes.NEW){
                                     LabelNode sendPacket = new LabelNode();
@@ -148,7 +161,9 @@ public class EmoteTransformer implements ClassFileTransformer {
                                     inject.add(new JumpInsnNode(Opcodes.IFNE, sendPacket));
                                     inject.add(new VarInsnNode(Opcodes.ALOAD, 0));
                                     inject.add(new MethodInsnNode(Opcodes.INVOKESTATIC, getPlayer.owner, getPlayer.name, getPlayer.desc));
-                                    inject.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                                    inject.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                                    inject.add(new VarInsnNode(Opcodes.ILOAD, 1));
+                                    inject.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, cn.name, getEmoteById.name, getEmoteById.desc));
                                     inject.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, cn.name, setEmotePlay.name, setEmotePlay.desc));
 
                                     inject.add(new InsnNode(Opcodes.RETURN));

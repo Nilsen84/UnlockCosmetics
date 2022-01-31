@@ -3,6 +3,7 @@ package me.onils.unlockcosmetics.proxy;
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
 import lombok.Setter;
+import me.onils.unlockcosmetics.proxy.packet.PacketState;
 import me.onils.unlockcosmetics.proxy.packet.WSPacket;
 import me.onils.unlockcosmetics.util.PacketBuffer;
 
@@ -50,8 +51,11 @@ public class Proxy {
                 WSPacket packet = packetClass.getDeclaredConstructor().newInstance();
                 packet.read(packetBuffer);
                 packetBuffer.release();
-                if(packet.process(this)){
+                PacketState packetState = packet.process(this);
+                if(packetState == PacketState.MODIFIED){
                     return packetToBytes(packetId, packet);
+                }else if(packetState == PacketState.CANCELLED){
+                    return new byte[0];
                 }
             } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException ex) {
                 ex.printStackTrace();
