@@ -29,11 +29,15 @@ public class Proxy {
         playerId = UUID.fromString(headers.get("playerId"));
     }
 
-    private static byte[] packetToBytes(int packetId, WSPacket packet){
+    private static byte[] packetToBytes(int packetId, WSPacket packet, byte[] extraBytes){
         PacketBuffer packetBuffer = new PacketBuffer(Unpooled.buffer());
 
         packetBuffer.writeVarIntToBuffer(packetId);
         packet.write(packetBuffer);
+
+        if (extraBytes.length > 0) {
+            packetBuffer.writeBytes(extraBytes);
+        }
 
         byte[] bytes = new byte[packetBuffer.readableBytes()];
         packetBuffer.readBytes(bytes);
@@ -50,10 +54,15 @@ public class Proxy {
             try {
                 WSPacket packet = packetClass.getDeclaredConstructor().newInstance();
                 packet.read(packetBuffer);
+
+                byte[] extraBytes = new byte[packetBuffer.readableBytes()];
+                if (extraBytes.length > 0) {
+                    packetBuffer.readBytes(extraBytes);
+                }
                 packetBuffer.release();
                 PacketState packetState = packet.process(this);
                 if(packetState == PacketState.MODIFIED){
-                    return packetToBytes(packetId, packet);
+                    return packetToBytes(packetId, packet, extraBytes);
                 }else if(packetState == PacketState.CANCELLED){
                     return new byte[0];
                 }

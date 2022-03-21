@@ -19,7 +19,6 @@ public class WSPacketCosmeticGive extends WSPacket {
     private boolean update;
     private boolean lunarPlus;
     private boolean clothCloaks;
-    private Map<Integer, Float> hatHeightOffset;
 
     @Override
     public void write(PacketBuffer buffer) {
@@ -37,11 +36,6 @@ public class WSPacketCosmeticGive extends WSPacket {
         buffer.writeBoolean(true);
         buffer.writeBoolean(true);
         buffer.writeBoolean(clothCloaks);
-        buffer.writeVarIntToBuffer(hatHeightOffset.size());
-        for(Map.Entry<Integer, Float> entry : hatHeightOffset.entrySet()){
-            buffer.writeInt(entry.getKey());
-            buffer.writeFloat(entry.getValue());
-        }
     }
 
     @Override
@@ -64,12 +58,6 @@ public class WSPacketCosmeticGive extends WSPacket {
         this.update = buffer.readBoolean();
         this.lunarPlus = buffer.readBoolean();
         this.clothCloaks = buffer.readBoolean();
-
-        int hatHeightOffsetSize = buffer.readVarIntFromBuffer();
-        this.hatHeightOffset = new HashMap<>(hatHeightOffsetSize);
-        for(int i = 0; i < hatHeightOffsetSize; ++i){
-            hatHeightOffset.put(buffer.readInt(), buffer.readFloat());
-        }
     }
 
     @Override

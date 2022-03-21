@@ -34,6 +34,11 @@ public class WSPacketEmoteGive extends WSPacket {
         for(int i = 0; i < numEmotes; ++i){
             owned.add(buffer.readVarIntFromBuffer());
         }
+
+        int numEquipped = buffer.readVarIntFromBuffer();
+        for(int i = 0; i < numEquipped; ++i){
+            buffer.readVarIntFromBuffer();
+        }
     }
 
     @Override
