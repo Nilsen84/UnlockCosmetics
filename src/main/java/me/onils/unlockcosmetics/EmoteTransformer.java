@@ -38,6 +38,8 @@ public class EmoteTransformer implements ClassFileTransformer {
                 if(biMaps.size() == 1 && lists.size() == 1){
                     FieldNode biMap = biMaps.get(0);
 
+                    if((biMap.access & Opcodes.ACC_STATIC) == 0) return classfileBuffer;
+
                     FieldNode emoteList = new FieldNode(Opcodes.ACC_PUBLIC, "emoteList", "Ljava/util/List;", null, null);
                     cn.fields.add(emoteList);
 
