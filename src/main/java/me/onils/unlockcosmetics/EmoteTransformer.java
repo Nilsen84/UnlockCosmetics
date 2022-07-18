@@ -1,5 +1,6 @@
 package me.onils.unlockcosmetics;
 
+import me.onils.unlockcosmetics.util.ASMUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -27,80 +28,57 @@ public class EmoteTransformer implements ClassFileTransformer {
                 ClassNode cn = new ClassNode();
                 cr.accept(cn, 0);
 
-                List<FieldNode> lists = cn.fields.stream()
-                        .filter(field -> "Ljava/util/List;".equals(field.desc))
-                        .collect(Collectors.toList());
-
-                List<FieldNode> biMaps = cn.fields.stream()
-                        .filter(field -> "Lcom/google/common/collect/BiMap;".equals(field.desc))
-                        .collect(Collectors.toList());
+                List<FieldNode> lists = ASMUtil.getFieldsOfType(cn, "Ljava/util/List;");
+                List<FieldNode> biMaps = ASMUtil.getFieldsOfType(cn, "Lcom/google/common/collect/BiMap;");
 
                 if(biMaps.size() == 1 && lists.size() == 1){
                     FieldNode biMap = biMaps.get(0);
+                    if(!ASMUtil.isStatic(biMap)) return classfileBuffer;
 
-                    if((biMap.access & Opcodes.ACC_STATIC) == 0) return classfileBuffer;
-
-                    FieldNode emoteList = new FieldNode(Opcodes.ACC_PUBLIC, "emoteList", "Ljava/util/List;", null, null);
+                    FieldNode emoteList = new FieldNode(
+                            Opcodes.ACC_PUBLIC,
+                            "emoteList",
+                            "Ljava/util/List;",
+                            null,
+                            null
+                    );
                     cn.fields.add(emoteList);
 
-                    for(MethodNode methodNode : cn.methods){
-                        if(Type.getReturnType(methodNode.desc).getInternalName().equals("java/util/List")){
+                    ASMUtil.construct(cn, inject -> {
+                        inject.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                        inject.add(new TypeInsnNode(Opcodes.NEW, "java/util/ArrayList"));
+                        inject.add(new InsnNode(Opcodes.DUP));
+                        inject.add(new FieldInsnNode(Opcodes.GETSTATIC, cn.name, biMap.name, biMap.desc));
+                        inject.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "com/google/common/collect/BiMap", "keySet", "()Ljava/util/Set;", true));
+                        inject.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/ArrayList", "<init>", "(Ljava/util/Collection;)V"));
+                        inject.add(new FieldInsnNode(Opcodes.PUTFIELD, cn.name, emoteList.name, emoteList.desc));
+                    });
+
+                    for(MethodNode mn : cn.methods){
+                        if(Type.getReturnType(mn.desc).getInternalName().equals("java/util/List")){
                             InsnList inject = new InsnList();
                             inject.add(new VarInsnNode(Opcodes.ALOAD, 0));
                             inject.add(new FieldInsnNode(Opcodes.GETFIELD, cn.name, emoteList.name, emoteList.desc));
                             inject.add(new InsnNode(Opcodes.ARETURN));
-                            methodNode.instructions.insert(inject);
-                        }else if("<init>".equals(methodNode.name)){
-                            AbstractInsnNode ret = methodNode.instructions.getLast();
-                            do {
-                                if(ret.getOpcode() == Opcodes.RETURN){
-                                    InsnList inject = new InsnList();
-                                    inject.add(new VarInsnNode(Opcodes.ALOAD, 0));
-                                    inject.add(new TypeInsnNode(Opcodes.NEW, "java/util/ArrayList"));
-                                    inject.add(new InsnNode(Opcodes.DUP));
-                                    inject.add(new FieldInsnNode(Opcodes.GETSTATIC, cn.name, biMap.name, biMap.desc));
-                                    inject.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE, "com/google/common/collect/BiMap", "keySet", "()Ljava/util/Set;", true));
-                                    inject.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/util/ArrayList", "<init>", "(Ljava/util/Collection;)V"));
-                                    inject.add(new FieldInsnNode(Opcodes.PUTFIELD, cn.name, emoteList.name, emoteList.desc));
-
-                                    methodNode.instructions.insertBefore(ret, inject);
-                                    break;
-                                }
-                            }while ((ret = ret.getPrevious()) != null);
+                            mn.instructions.insert(inject);
                         }else{
-                            LabelNode dontOwn = null;
-                            outer:
-                            for(AbstractInsnNode insnNode : methodNode.instructions){
-                                if(insnNode instanceof LdcInsnNode ldcNode){
-                                    if("Couldn't perform emote (%s) as you do not own it".equals(ldcNode.cst)){
-                                        while((insnNode = insnNode.getPrevious()) != null){
-                                            if(insnNode instanceof LabelNode label){
-                                                dontOwn = label;
-                                                break outer;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            LabelNode dontOwn = ASMUtil.getPrevOfType(
+                                    ASMUtil.getConstant(mn, "Couldn't perform emote (%s) as you do not own it"),
+                                    LabelNode.class
+                            );
 
                             if(dontOwn == null){
                                 continue;
                             }
 
                             MethodInsnNode getPlayer = null;
-                            outer:
-                            for(AbstractInsnNode insnNode : methodNode.instructions){
+                            for(AbstractInsnNode insnNode : mn.instructions){
                                 if(insnNode.getOpcode() == Opcodes.INVOKEINTERFACE){
                                     MethodInsnNode methodInsnNode = (MethodInsnNode)insnNode;
 
                                     if(methodInsnNode.name.equals("bridge$getUniqueID")){
-                                        AbstractInsnNode tmp = insnNode;
-                                        while((tmp = tmp.getPrevious()) != null){
-                                            if(tmp.getOpcode() == Opcodes.INVOKESTATIC){
-                                                getPlayer = (MethodInsnNode) tmp;
-                                                break outer;
-                                            }
-                                        }
+                                        getPlayer = (MethodInsnNode) ASMUtil.getPrevWithOpcode(insnNode, Opcodes.INVOKESTATIC);
+                                        break;
                                     }
                                 }
                             }
@@ -115,10 +93,14 @@ public class EmoteTransformer implements ClassFileTransformer {
                             for(MethodNode method : cn.methods){
                                 if(Type.getReturnType(method.desc) == Type.VOID_TYPE){
                                     Type[] args = Type.getArgumentTypes(method.desc);
-                                    if(args.length == 2){
+                                    if(args.length == 3 &&
+                                            args[0].getSort() == Type.OBJECT &&
+                                            args[1].getSort() == Type.OBJECT &&
+                                            args[2] == Type.INT_TYPE
+                                    ) {
                                         for(AbstractInsnNode insn : method.instructions){
                                             if(insn instanceof MethodInsnNode methodInsnNode
-                                                && methodInsnNode.name.equals("bridge$setThirdPersonView")){
+                                                    && methodInsnNode.name.equals("bridge$setThirdPersonView")){
                                                 setEmotePlay = method;
                                                 emoteClass = args[1].getInternalName();
                                             }
@@ -131,21 +113,21 @@ public class EmoteTransformer implements ClassFileTransformer {
                                 continue;
                             }
 
-                            int ownsEmoteIndex = methodNode.maxLocals;
+                            int ownsEmoteIndex = mn.maxLocals;
 
-                            for(AbstractInsnNode insnNode : methodNode.instructions){
+                            for(AbstractInsnNode insnNode : mn.instructions){
                                 if(insnNode.getOpcode() == Opcodes.IFEQ){
                                     JumpInsnNode jumpNode = (JumpInsnNode) insnNode;
                                     if(jumpNode.label.equals(dontOwn)){
-                                        methodNode.instructions.insertBefore(jumpNode, new VarInsnNode(Opcodes.ISTORE, ownsEmoteIndex));
-                                        methodNode.instructions.insertBefore(jumpNode, new InsnNode(Opcodes.ICONST_1));
+                                        mn.instructions.insertBefore(jumpNode, new VarInsnNode(Opcodes.ISTORE, ownsEmoteIndex));
+                                        mn.instructions.insertBefore(jumpNode, new InsnNode(Opcodes.ICONST_1));
                                     }
                                 }
                             }
 
                             MethodNode getEmoteById = null;
                             for(MethodNode method : cn.methods){
-                                if(method.desc.equals("(I)L" + emoteClass + ';') && (method.access & Opcodes.ACC_STATIC) == 0){
+                                if(method.desc.equals("(I)L" + emoteClass + ';') && !ASMUtil.isStatic(method)){
                                     getEmoteById = method;
                                 }
                             }
@@ -154,7 +136,7 @@ public class EmoteTransformer implements ClassFileTransformer {
                                 continue;
                             }
 
-                            for(AbstractInsnNode insnNode : methodNode.instructions){
+                            for(AbstractInsnNode insnNode : mn.instructions){
                                 if(insnNode.getOpcode() == Opcodes.NEW){
                                     LabelNode sendPacket = new LabelNode();
 
@@ -166,12 +148,13 @@ public class EmoteTransformer implements ClassFileTransformer {
                                     inject.add(new VarInsnNode(Opcodes.ALOAD, 0));
                                     inject.add(new VarInsnNode(Opcodes.ILOAD, 1));
                                     inject.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, cn.name, getEmoteById.name, getEmoteById.desc));
+                                    inject.add(new VarInsnNode(Opcodes.ILOAD, 2));
                                     inject.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, cn.name, setEmotePlay.name, setEmotePlay.desc));
 
                                     inject.add(new InsnNode(Opcodes.RETURN));
                                     inject.add(sendPacket);
 
-                                    methodNode.instructions.insertBefore(insnNode, inject);
+                                    mn.instructions.insertBefore(insnNode, inject);
                                 }
                             }
                         }
