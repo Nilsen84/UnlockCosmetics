@@ -28,6 +28,10 @@ public class ASMUtil {
         return (mn.access & Opcodes.ACC_STATIC) != 0;
     }
 
+    public boolean isLunar(String className){
+        return className.startsWith("com/moonsworth/lunar/");
+    }
+
     public void construct(ClassNode cn, Consumer<InsnList> consumer) {
         for (MethodNode methodNode : cn.methods) {
             if(!"<init>".equals(methodNode.name)) continue;

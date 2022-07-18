@@ -39,4 +39,6 @@ shadowJar {
     minimize()
 
     archiveFileName = "${project.name}.jar"
+
+    relocate('io.netty', 'me.onils.io.netty')
 }

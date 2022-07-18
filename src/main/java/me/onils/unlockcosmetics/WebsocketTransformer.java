@@ -14,12 +14,7 @@ import java.security.ProtectionDomain;
 import java.util.Arrays;
 
 public class WebsocketTransformer implements ClassFileTransformer {
-    private int count = 0;
-
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        if(!className.startsWith("lunar/"))
-            return classfileBuffer;
-
         ClassReader cr = new ClassReader(classfileBuffer);
         if(cr.getSuperName().equals("org/java_websocket/client/WebSocketClient")) {
             ClassNode cn = new ClassNode();
